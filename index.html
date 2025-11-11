@@ -4,8 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>显示钉钉三交三查照片</title>
+    <script src="./js/xlsx.full.min.js"></script>
 </head>
 <body>
-    <input type="file" accept=".xls,.xlsx">
+    <input type="file" accept=".xls,.xlsx" id="fileInput" required style="display: block;">
+    <script>
+        // 全局变量
+        let workbook;
+
+        // 获取文件输入元素
+        const fileInput = document.getElementById('fileInput');
+
+        // 监听文件选择事件
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) {
+                return;
+            }
+            const fileReader = new FileReader();
+            fileReader.onload = (e)=>{
+                const data = new Uint8Array(e.target.result);
+                workbook = XLSX.read(data, {type: 'array'});
+                displaySheetNames();
+            };
+            fileReader.readAsArrayBuffer(file);
+        });
+
+        // 导出为Excel文件的函数
+        function exportToExcel(data, filename = 'export.xlsx') {
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+            XLSX.writeFile(workbook, filename);
+        }
+
+        // 解析并显示工作表名称的函数
+        function displaySheetNames() {
+            if(!workbook) {
+                return;
+            }
+            const sheetNames = workbook.SheetNames;
+            let sheetNamesContainer = document.getElementById('sheetNamesContainer');
+            if(!sheetNamesContainer) {
+                sheetNamesContainer = document.createElement('select');
+                sheetNamesContainer.id = 'sheetNamesContainer';
+                document.body.appendChild(sheetNamesContainer);
+            }
+            sheetNamesContainer.innerHTML = '';
+            sheetNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                sheetNamesContainer.appendChild(option);
+            });
+        }
+    </script>
 </body>
 </html>
