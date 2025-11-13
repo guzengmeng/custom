@@ -47,24 +47,28 @@ function createPhotoList() {
   const photoTemplate = document.getElementById("photoTemplate");
   const clone = photoTemplate.content.cloneNode(true);
   const photoList = clone.querySelector(".photo-list");
-  info.forEach((e) => {
+  info.forEach((e, index) => {
     const li = document.createElement("li");
     li.innerHTML = `
+                    <span>序号: ${index + 1}</span>
                     <span>${e["创建人"]}</span>
                     <span>${e["创建时间"]}</span>
                     <span>${e["创建人部门"]}</span>
                     <span>${e["工作状态"]}</span>
                 `;
+
     if (e["工作状态"] === "出工") {
       li.innerHTML += `
                     <img src="${e["隐患照片"]}" alt="隐患照片" class="info-photo">
                     <img src="${e["防护措施照片"]}" alt="防护措施照片" class="info-photo">
                 `;
+
     }else {
       li.innerHTML += `
                     <span>无照片</span>
                     <span>无照片</span>
                 `;
+
     }
     photoList.appendChild(li);
   });
