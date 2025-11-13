@@ -4,13 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>显示钉钉三交三查照片</title>
+    <style>
+        .photo-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .photo-list li {
+            margin-bottom: 20px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: start;
+            gap: 15px;
+            position: relative;
+        }
+        .photo-list li::after {
+            content: "";
+            display: block;
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background-color: #ccc;
+            margin-top: 20px;
+        }
+        .photo-list li span {
+            display: inline-block;
+            border-radius: 10px;
+            padding: 10px;
+            min-width: 80px;
+            text-align: center;
+        }
+        .photo-list li span:hover{
+            background-color: black;
+            color: white;
+            transform: scale(1.2);
+            transition: all 0.3s ease;
+        }
+        .info-photo {
+            width: 100px;
+            margin: 5px;
+            border-radius: 10px;
+            z-index: 1;
+        }
+        .info-photo:hover{
+            transform-origin: center center;
+            transform: scale(4.0);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+    </style>
     <script src="./js/xlsx.full.min.js"></script>
 </head>
 <body>
     <input type="file" accept=".xls,.xlsx" id="fileInput" required style="display: block;">
+    <template id="photoTemplate">
+        <ul class="photo-list"></ol>
+    </template>
     <script>
+        // 全局常量
+        const options = {
+            header:"1",
+            raw:true,
+            dateNF:"yyyy-mm-dd hh:mm:ss",
+        };
+
         // 全局变量
-        let workbook;
+        let info = [];
 
         // 获取文件输入元素
         const fileInput = document.getElementById('fileInput');
@@ -18,45 +80,50 @@
         // 监听文件选择事件
         fileInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
-            if (!file) {
-                return;
-            }
+            if (!file) {return}
+            // 读取文件内容
             const fileReader = new FileReader();
             fileReader.onload = (e)=>{
                 const data = new Uint8Array(e.target.result);
-                workbook = XLSX.read(data, {type: 'array'});
-                displaySheetNames();
+                const workbook = XLSX.read(data, {type: 'array'});
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const table = XLSX.utils.sheet_to_row_object_array(worksheet, options);
+                // 提取所需信息
+                info = table.map(e => {
+                    return {
+                        "创建人":e["创建人"],
+                        "创建时间":e["创建时间"],
+                        "创建人部门":e["创建人部门"],
+                        "工作状态":e["工作状态"],
+                        "隐患照片":e["隐患照片"],
+                        "防护措施照片":e["防护措施照片"],
+                    };
+                });
+                // 创建照片列表
+                createPhotoList();
             };
+            // 读取文件内容
             fileReader.readAsArrayBuffer(file);
         });
 
-        // 导出为Excel文件的函数
-        function exportToExcel(data, filename = 'export.xlsx') {
-            const worksheet = XLSX.utils.json_to_sheet(data);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-            XLSX.writeFile(workbook, filename);
-        }
-
-        // 解析并显示工作表名称的函数
-        function displaySheetNames() {
-            if(!workbook) {
-                return;
-            }
-            const sheetNames = workbook.SheetNames;
-            let sheetNamesContainer = document.getElementById('sheetNamesContainer');
-            if(!sheetNamesContainer) {
-                sheetNamesContainer = document.createElement('select');
-                sheetNamesContainer.id = 'sheetNamesContainer';
-                document.body.appendChild(sheetNamesContainer);
-            }
-            sheetNamesContainer.innerHTML = '';
-            sheetNames.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                sheetNamesContainer.appendChild(option);
+        // 创建照片列表
+        function createPhotoList() {
+            const photoTemplate = document.getElementById('photoTemplate');
+            const clone = photoTemplate.content.cloneNode(true);
+            const photoList = clone.querySelector('.photo-list');
+            info.forEach(e => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${e["创建人"]}</span>
+                    <span>${e["创建时间"]}</span>
+                    <span>${e["创建人部门"]}</span>
+                    <span>${e["工作状态"]}</span>
+                    <img src="${e["隐患照片"]}" alt="隐患照片" class="info-photo">
+                    <img src="${e["防护措施照片"]}" alt="防护措施照片" class="info-photo">
+                `;
+                photoList.appendChild(li);
             });
+            document.body.appendChild(clone);
         }
     </script>
 </body>
