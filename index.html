@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>显示钉钉三交三查照片</title>
-    <style type="text/css" ref="style/index.css"></style>
+    <link rel="stylesheet" href="style/index.css">
 </head>
 <body>
     <input type="file" accept=".xls,.xlsx" id="fileInput" required style="display: block;">
     <template id="photoTemplate">
-        <ul class="photo-list"></ol>
+        <ul class="photo-list"></ul>
     </template>
-    <script type="text/javascript" ref="js/index.js"></script>
+    
+    <!-- 引入XLSX库 -->
+    <script src="js/xlsx.full.min.js"></script>
+    <!-- 引入主脚本 -->
+    <script src="js/main.js"></script>
 </body>
 </html>
