@@ -54,9 +54,18 @@ function createPhotoList() {
                     <span>${e["创建时间"]}</span>
                     <span>${e["创建人部门"]}</span>
                     <span>${e["工作状态"]}</span>
+                `;
+    if (e["工作状态"] === "出工") {
+      li.innerHTML += `
                     <img src="${e["隐患照片"]}" alt="隐患照片" class="info-photo">
                     <img src="${e["防护措施照片"]}" alt="防护措施照片" class="info-photo">
                 `;
+    }else {
+      li.innerHTML += `
+                    <span>无照片</span>
+                    <span>无照片</span>
+                `;
+    }
     photoList.appendChild(li);
   });
   document.body.appendChild(clone);
