@@ -1,4 +1,4 @@
-import XLSX from "xlsx";
+import {XLSX} from "./js/xlsx.full.min.js";
 
 // 全局常量
 const options = {
