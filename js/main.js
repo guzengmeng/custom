@@ -1,3 +1,5 @@
+import XLSX from "xlsx";
+
 // 全局常量
 const options = {
   header: "1",
