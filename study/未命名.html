@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>联通基站端口级联记录表</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  
+  <!-- 配置Tailwind主题 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            unicom: {
+              blue: '#0066B2',
+              light: '#E8F3FF',
+              dark: '#005299',
+              gray: '#F0F2F5'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .card-shadow {
+        box-shadow: 0 4px 12px rgba(0, 102, 178, 0.1);
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-unicom-gray min-h-screen font-sans text-gray-800">
+  <!-- 顶部导航栏 -->
+  <header class="bg-unicom-blue text-white shadow-md fixed top-0 left-0 right-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <h1 class="text-lg font-bold">端口级联记录表</h1>
+      <div class="flex space-x-3">
+        <button id="helpBtn" class="p-2 rounded-full hover:bg-unicom-dark transition-colors">
+          <i class="fa fa-question-circle"></i>
+        </button>
+        <button id="settingsBtn" class="p-2 rounded-full hover:bg-unicom-dark transition-colors">
+          <i class="fa fa-cog"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 机房信息 -->
+  <div class="pt-16 pb-4 px-4 bg-white">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-base font-semibold text-gray-700">机房信息</h2>
+      <button id="editRoomBtn" class="text-unicom-blue text-sm flex items-center">
+        <i class="fa fa-pencil mr-1"></i> 编辑
+      </button>
+    </div>
+    <div class="grid grid-cols-2 gap-2 text-sm">
+      <div class="bg-unicom-light rounded-lg p-3">
+        <div class="text-gray-500 mb-1">机房编号</div>
+        <div id="roomId" class="font-medium">JL-2023-056</div>
+      </div>
+      <div class="bg-unicom-light rounded-lg p-3">
+        <div class="text-gray-500 mb-1">基站名称</div>
+        <div id="stationName" class="font-medium">东风路基站</div>
+      </div>
+      <div class="bg-unicom-light rounded-lg p-3">
+        <div class="text-gray-500 mb-1">记录日期</div>
+        <div id="recordDate" class="font-medium">2025-11-14</div>
+      </div>
+      <div class="bg-unicom-light rounded-lg p-3">
+        <div class="text-gray-500 mb-1">维护人员</div>
+        <div id="maintainer" class="font-medium">张明</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主要操作区 -->
+  <main class="container mx-auto px-4 pb-24">
+    <!-- 功能按钮区 -->
+    <div class="grid grid-cols-3 gap-3 my-4">
+      <button id="addDeviceBtn" class="bg-unicom-blue text-white rounded-lg p-3 flex flex-col items-center justify-center card-shadow">
+        <i class="fa fa-server text-xl mb-1"></i>
+        <span class="text-xs">添加设备</span>
+      </button>
+      <button id="addCascadeBtn" class="bg-green-600 text-white rounded-lg p-3 flex flex-col items-center justify-center card-shadow">
+        <i class="fa fa-link text-xl mb-1"></i>
+        <span class="text-xs">记录级联</span>
+      </button>
+      <button id="exportBtn" class="bg-orange-500 text-white rounded-lg p-3 flex flex-col items-center justify-center card-shadow">
+        <i class="fa fa-download text-xl mb-1"></i>
+        <span class="text-xs">导出数据</span>
+      </button>
+    </div>
+
+    <!-- 设备列表 -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-semibold text-gray-700">设备列表</h2>
+        <span id="deviceCount" class="bg-unicom-blue text-white text-xs px-2 py-1 rounded-full">3台设备</span>
+      </div>
+      
+      <div class="space-y-3 max-h-64 overflow-y-auto scrollbar-hide">
+        <!-- 设备1 -->
+        <div class="bg-white rounded-lg p-3 card-shadow">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-medium">OLT设备</h3>
+              <p class="text-sm text-gray-500">型号: MA5800-X7</p>
+            </div>
+            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">12个端口</span>
+          </div>
+          <div class="mt-2 grid grid-cols-4 gap-1">
+            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded text-center">GE0/1/0</span>
+            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded text-center">GE0/1/1</span>
+            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded text-center">GE0/1/2</span>
+            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded text-center">GE0/1/3</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">GE0/1/4</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">GE0/1/5</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">...</span>
+            <span class="text-xs text-unicom-blue px-2 py-1 rounded text-center">
+              <i class="fa fa-plus-circle"></i>
+            </span>
+          </div>
+        </div>
+        
+        <!-- 设备2 -->
+        <div class="bg-white rounded-lg p-3 card-shadow">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-medium">光缆成端</h3>
+              <p class="text-sm text-gray-500">位置: 东侧ODF架</p>
+            </div>
+            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">24个端口</span>
+          </div>
+          <div class="mt-2 grid grid-cols-4 gap-1">
+            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded text-center">ODF-01</span>
+            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded text-center">ODF-02</span>
+            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded text-center">ODF-03</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">ODF-04</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">ODF-05</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">ODF-06</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">...</span>
+            <span class="text-xs text-unicom-blue px-2 py-1 rounded text-center">
+              <i class="fa fa-plus-circle"></i>
+            </span>
+          </div>
+        </div>
+        
+        <!-- 设备3 -->
+        <div class="bg-white rounded-lg p-3 card-shadow">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-medium">交换机</h3>
+              <p class="text-sm text-gray-500">型号: S5720-28X</p>
+            </div>
+            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">8个端口</span>
+          </div>
+          <div class="mt-2 grid grid-cols-4 gap-1">
+            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded text-center">Gi0/1</span>
+            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded text-center">Gi0/2</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">Gi0/3</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">Gi0/4</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">Gi0/5</span>
+            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded text-center">...</span>
+            <span class="text-xs text-unicom-blue px-2 py-1 rounded text-center">
+              <i class="fa fa-plus-circle"></i>
+            </span>
+            <span class="text-xs"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 级联关系表 -->
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-semibold text-gray-700">级联关系记录</h2>
+        <span id="cascadeCount" class="bg-green-600 text-white text-xs px-2 py-1 rounded-full">4条记录</span>
+      </div>
+      
+      <div class="bg-white rounded-lg overflow-hidden card-shadow">
+        <div class="grid grid-cols-3 text-xs font-medium text-gray-500 bg-gray-50 p-2 border-b">
+          <div>源端口</div>
+          <div class="text-center">连接</div>
+          <div class="text-right">目标端口</div>
+        </div>
+        
+        <div class="divide-y max-h-64 overflow-y-auto scrollbar-hide">
+          <!-- 级联记录1 -->
+          <div class="grid grid-cols-3 text-xs p-2 items-center">
+            <div>
+              <div class="font-medium">OLT: GE0/1/2</div>
+              <div class="text-gray-500">MA5800-X7</div>
+            </div>
+            <div class="text-center text-green-600">
+              <i class="fa fa-long-arrow-right"></i>
+            </div>
+            <div class="text-right">
+              <div class="font-medium">ODF: ODF-01</div>
+              <div class="text-gray-500">东侧ODF架</div>
+            </div>
+          </div>
+          
+          <!-- 级联记录2 -->
+          <div class="grid grid-cols-3 text-xs p-2 items-center">
+            <div>
+              <div class="font-medium">OLT: GE0/1/3</div>
+              <div class="text-gray-500">MA5800-X7</div>
+            </div>
+            <div class="text-center text-green-600">
+              <i class="fa fa-long-arrow-right"></i>
+            </div>
+            <div class="text-right">
+              <div class="font-medium">ODF: ODF-02</div>
+              <div class="text-gray-500">东侧ODF架</div>
+            </div>
+          </div>
+          
+          <!-- 级联记录3 -->
+          <div class="grid grid-cols-3 text-xs p-2 items-center">
+            <div>
+              <div class="font-medium">ODF: ODF-03</div>
+              <div class="text-gray-500">东侧ODF架</div>
+            </div>
+            <div class="text-center text-green-600">
+              <i class="fa fa-long-arrow-right"></i>
+            </div>
+            <div class="text-right">
+              <div class="font-medium">交换机: Gi0/1</div>
+              <div class="text-gray-500">S5720-28X</div>
+            </div>
+          </div>
+          
+          <!-- 级联记录4 -->
+          <div class="grid grid-cols-3 text-xs p-2 items-center">
+            <div>
+              <div class="font-medium">OLT: GE0/1/0</div>
+              <div class="text-gray-500">MA5800-X7</div>
+            </div>
+            <div class="text-center text-green-600">
+              <i class="fa fa-long-arrow-right"></i>
+            </div>
+            <div class="text-right">
+              <div class="font-medium">交换机: Gi0/2</div>
+              <div class="text-gray-500">S5720-28X</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 底部操作栏 -->
+  <footer class="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.05)] px-6 py-3">
+    <div class="grid grid-cols-4 gap-2">
+      <button class="flex flex-col items-center text-unicom-blue">
+        <i class="fa fa-home text-lg"></i>
+        <span class="text-xs mt-1">首页</span>
+      </button>
+      <button class="flex flex-col items-center text-gray-500">
+        <i class="fa fa-search text-lg"></i>
+        <span class="text-xs mt-1">查询</span>
+      </button>
+      <button class="flex flex-col items-center text-gray-500">
+        <i class="fa fa-history text-lg"></i>
+        <span class="text-xs mt-1">历史</span>
+      </button>
+      <button class="flex flex-col items-center text-gray-500">
+        <i class="fa fa-user text-lg"></i>
+        <span class="text-xs mt-1">我的</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- 添加设备弹窗 (默认隐藏) -->
+  <div id="addDeviceModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg w-full max-w-md mx-4">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-semibold">添加设备</h3>
+        <button id="closeDeviceModal" class="text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="p-4">
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">设备类型</label>
+          <select class="w-full p-2 border border-gray-300 rounded-md">
+            <option>OLT设备</option>
+            <option>光缆成端</option>
+            <option>交换机</option>
+            <option>路由器</option>
+            <option>其他</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">型号/位置</label>
+          <input type="text" class="w-full p-2 border border-gray-300 rounded-md" placeholder="例如: MA5800-X7 或 东侧ODF架">
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">端口数量</label>
+          <input type="number" class="w-full p-2 border border-gray-300 rounded-md" placeholder="输入端口数量">
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">端口命名规则</label>
+          <input type="text" class="w-full p-2 border border-gray-300 rounded-md" placeholder="例如: GE0/1/ 或 ODF-">
+        </div>
+      </div>
+      <div class="p-4 border-t flex justify-end">
+        <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md mr-2">取消</button>
+        <button class="bg-unicom-blue text-white px-4 py-2 rounded-md">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 记录级联弹窗 (默认隐藏) -->
+  <div id="addCascadeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg w-full max-w-md mx-4">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-semibold">记录级联关系</h3>
+        <button id="closeCascadeModal" class="text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="p-4">
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">源设备</label>
+          <select class="w-full p-2 border border-gray-300 rounded-md">
+            <option>OLT设备 (MA5800-X7)</option>
+            <option>光缆成端 (东侧ODF架)</option>
+            <option>交换机 (S5720-28X)</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">源端口</label>
+          <select class="w-full p-2 border border-gray-300 rounded-md">
+            <option>GE0/1/0</option>
+            <option>GE0/1/1</option>
+            <option>GE0/1/2</option>
+            <option>GE0/1/3</option>
+            <option>GE0/1/4</option>
+          </select>
+        </div>
+        <div class="my-2 text-center">
+          <i class="fa fa-exchange text-green-600"></i>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">目标设备</label>
+          <select class="w-full p-2 border border-gray-300 rounded-md">
+            <option>OLT设备 (MA5800-X7)</option>
+            <option>光缆成端 (东侧ODF架)</option>
+            <option>交换机 (S5720-28X)</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">目标端口</label>
+          <select class="w-full p-2 border border-gray-300 rounded-md">
+            <option>ODF-01</option>
+            <option>ODF-02</option>
+            <option>ODF-03</option>
+            <option>ODF-04</option>
+            <option>ODF-05</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">尾纤类型</label>
+          <input type="text" class="w-full p-2 border border-gray-300 rounded-md" placeholder="例如: LC-LC 单模">
+        </div>
+      </div>
+      <div class="p-4 border-t flex justify-end">
+        <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md mr-2">取消</button>
+        <button class="bg-green-600 text-white px-4 py-2 rounded-md">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 帮助提示 (默认隐藏) -->
+  <div id="helpModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
+      <div class="p-4 border-b flex justify-between items-center">
+        <h3 class="font-semibold">操作指南</h3>
+        <button id="closeHelpModal" class="text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="p-4 text-sm">
+        <div class="mb-4">
+          <h4 class="font-medium mb-2">1. 机房信息设置</h4>
+          <p class="text-gray-600">点击"编辑"按钮修改当前机房信息，包括机房编号、基站名称等。</p>
+        </div>
+        <div class="mb-4">
+          <h4 class="font-medium mb-2">2. 添加设备</h4>
+          <p class="text-gray-600">点击"添加设备"按钮，录入设备类型、型号和端口信息。支持OLT、光缆成端、交换机等多种设备。</p>
+        </div>
+        <div class="mb-4">
+          <h4 class="font-medium mb-2">3. 记录级联关系</h4>
+          <p class="text-gray-600">通过拔尾纤、打红光确认端口连接后，点击"记录级联"按钮，选择源端口和目标端口完成记录。</p>
+        </div>
+        <div class="mb-4">
+          <h4 class="font-medium mb-2">4. 数据导出</h4>
+          <p class="text-gray-600">完成记录后，点击"导出数据"可将级联关系表导出为Excel或CSV格式。</p>
+        </div>
+        <div>
+          <h4 class="font-medium mb-2">端口状态说明</h4>
+          <div class="flex items-center mb-1">
+            <span class="inline-block w-3 h-3 bg-blue-100 border border-blue-300 rounded-sm mr-2"></span>
+            <span>未连接端口</span>
+          </div>
+          <div class="flex items-center mb-1">
+            <span class="inline-block w-3 h-3 bg-green-100 border border-green-300 rounded-sm mr-2"></span>
+            <span>已连接端口</span>
+          </div>
+          <div class="flex items-center">
+            <span class="inline-block w-3 h-3 bg-gray-100 border border-gray-300 rounded-sm mr-2"></span>
+            <span>未使用端口</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 初始化日期为当前日期
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date();
+      const dateStr = today.getFullYear() + '-' + 
+                     String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                     String(today.getDate()).padStart(2, '0');
+      document.getElementById('recordDate').textContent = dateStr;
+      
+      // 绑定弹窗事件
+      document.getElementById('addDeviceBtn').addEventListener('click', function() {
+        document.getElementById('addDeviceModal').classList.remove('hidden');
+      });
+      
+      document.getElementById('closeDeviceModal').addEventListener('click', function() {
+        document.getElementById('addDeviceModal').classList.add('hidden');
+      });
+      
+      document.getElementById('addCascadeBtn').addEventListener('click', function() {
+        document.getElementById('addCascadeModal').classList.remove('hidden');
+      });
+      
+      document.getElementById('closeCascadeModal').addEventListener('click', function() {
+        document.getElementById('addCascadeModal').classList.add('hidden');
+      });
+      
+      document.getElementById('helpBtn').addEventListener('click', function() {
+        document.getElementById('helpModal').classList.remove('hidden');
+      });
+      
+      document.getElementById('closeHelpModal').addEventListener('click', function() {
+        document.getElementById('helpModal').classList.add('hidden');
+      });
+      
+      // 点击弹窗外部关闭
+      window.addEventListener('click', function(event) {
+        const modals = [
+          document.getElementById('addDeviceModal'),
+          document.getElementById('addCascadeModal'),
+          document.getElementById('helpModal')
+        ];
+        
+        modals.forEach(modal => {
+          if (event.target === modal) {
+            modal.classList.add('hidden');
+          }
+        });
+      });
+      
+      // 导出功能提示
+      document.getElementById('exportBtn').addEventListener('click', function() {
+        alert('正在导出数据为Excel格式...\n(实际应用中会触发文件下载)');
+      });
+    });
+  </script>
+</body>
+</html>
